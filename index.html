@@ -3,246 +3,336 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI OCR Pro: Arab, Turki & Latin</title>
+    <title>Free Image to Text Converter - OCR Tool</title>
+    <meta name="description" content="Konversi gambar ke teks dengan mudah dan gratis. Mendukung Bahasa Arab, Indonesia, dan Inggris.">
+    
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Amiri&display=swap" rel="stylesheet">
+
     <style>
-        :root { --primary: #1a73e8; --bg: #fdfdfd; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; margin: 0; padding: 15px; }
-        .container { max-width: 850px; margin: auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 8px 30px rgba(0,0,0,0.1); }
-        header { text-align: center; border-bottom: 2px solid #eee; margin-bottom: 20px; padding-bottom: 10px; }
-        .upload-box { border: 3px dashed #1a73e8; border-radius: 12px; padding: 30px; text-align: center; cursor: pointer; background: #f8faff; transition: 0.3s; }
-        .upload-box:hover { background: #eef4ff; }
-        #preview-img { max-width: 100%; height: auto; margin-top: 15px; border-radius: 8px; display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
-        button { padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.2s; }
-        .btn-run { background: var(--primary); color: white; }
-        .btn-copy { background: #34a853; color: white; }
-        button:disabled { background: #ccc; cursor: not-allowed; }
-        .status-area { margin-top: 15px; font-size: 14px; color: #555; background: #fff3cd; padding: 8px; border-radius: 5px; display: none; }
-        #output { width: 100%; height: 350px; margin-top: 20px; padding: 15px; border: 2px solid #ddd; border-radius: 10px; font-size: 18px; line-height: 1.6; box-sizing: border-box; }
-        /* Style khusus untuk Teks Arab */
-        .rtl-mode { direction: rtl; text-align: right; font-family: 'Amiri', serif; }
+        /* --- CSS VARIABLE (Tema Warna Mirip Referensi) --- */
+        :root {
+            --primary-color: #5a67d8; /* Warna ungu kebiruan modern */
+            --primary-hover: #4c51bf;
+            --bg-body: #f7fafc;
+            --bg-card: #ffffff;
+            --text-main: #2d3748;
+            --text-muted: #718096;
+            --border-color: #e2e8f0;
+        }
+
+        /* --- RESET & BASE STYLES --- */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-body); color: var(--text-main); line-height: 1.6; }
+
+        /* --- NAVBAR --- */
+        .navbar { background: var(--bg-card); border-bottom: 1px solid var(--border-color); padding: 1rem 0; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
+        .nav-wrapper { display: flex; justify-content: space-between; align-items: center; }
+        .brand { font-size: 1.5rem; font-weight: 700; color: var(--primary-color); display: flex; align-items: center; gap: 10px; }
+
+        /* --- MAIN CONTENT --- */
+        .hero-section { text-align: center; padding: 40px 20px; }
+        .hero-title { font-size: 2.25rem; font-weight: 800; margin-bottom: 10px; color: #1a202c; }
+        .hero-subtitle { color: var(--text-muted); font-size: 1.1rem; max-width: 600px; margin: 0 auto 40px; }
+
+        /* --- TOOL CARD (Kotak Utama) --- */
+        .tool-card { background: var(--bg-card); border-radius: 16px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08); border: 1px solid var(--border-color); overflow: hidden; margin-bottom: 50px; }
+        
+        /* Language Selection Bar */
+        .options-bar { padding: 20px 30px; background: #fcfdfe; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 15px; }
+        .lang-label { font-weight: 600; color: var(--text-main); display: flex; align-items: center; gap: 8px; }
+        .lang-select { padding: 10px 15px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 14px; color: var(--text-main); background-color: white; cursor: pointer; flex-grow: 1; max-width: 350px; outline: none; transition: border-color 0.2s; }
+        .lang-select:focus { border-color: var(--primary-color); }
+
+        /* Upload Area */
+        .upload-section { padding: 40px 30px; }
+        .dropzone { border: 2px dashed #cbd5e0; border-radius: 12px; padding: 60px 20px; text-align: center; cursor: pointer; transition: all 0.3s ease; background: #f8fafc; }
+        .dropzone:hover { border-color: var(--primary-color); background: #ebf4ff; }
+        .dropzone-icon { font-size: 4rem; color: var(--primary-color); margin-bottom: 20px; opacity: 0.8; }
+        .dropzone-text { font-size: 1.2rem; font-weight: 600; margin-bottom: 8px; }
+        .dropzone-subtext { color: var(--text-muted); font-size: 0.9rem; }
+
+        /* Previews & Actions */
+        .preview-area { display: flex; gap: 10px; padding: 0 30px 20px; overflow-x: auto; }
+        .preview-thumb { width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border-color); }
+        
+        .action-section { padding: 20px 30px 40px; text-align: center; }
+        .btn-convert { background-color: var(--primary-color); color: white; border: none; padding: 14px 40px; border-radius: 8px; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: background-color 0.2s; display: inline-flex; align-items: center; gap: 10px; box-shadow: 0 4px 6px rgba(90, 103, 216, 0.2); }
+        .btn-convert:hover:not(:disabled) { background-color: var(--primary-hover); transform: translateY(-2px); }
+        .btn-convert:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
+        .status-text { margin-top: 15px; font-size: 0.95rem; color: var(--text-muted); font-weight: 500; min-height: 24px; }
+
+        /* --- RESULTS SECTION --- */
+        .results-section { border-top: 1px solid var(--border-color); display: none; /* Hidden by default */ }
+        .results-header { padding: 15px 30px; background: #fcfdfe; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
+        .results-title { font-weight: 700; display: flex; align-items: center; gap: 8px; }
+        
+        .toolbar-btn { background: white; border: 1px solid var(--border-color); padding: 8px 16px; border-radius: 6px; font-size: 0.9rem; font-weight: 600; color: var(--text-main); cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; }
+        .toolbar-btn:hover { background: #f7fafc; border-color: #cbd5e0; }
+        .btn-copy { color: var(--primary-color); border-color: currentColor; }
+        .btn-copy:hover { background: #ebf4ff; }
+
+        .output-textarea { width: 100%; min-height: 400px; border: none; padding: 30px; resize: vertical; font-family: 'Inter', sans-serif; font-size: 1rem; line-height: 1.8; color: #2d3748; outline: none; background: var(--bg-card); }
+        
+        /* --- UTILITIES --- */
+        .hidden { display: none !important; }
+        /* Kelas khusus untuk mode RTL (Arab) */
+        .is-rtl { direction: rtl; text-align: right; font-family: 'Amiri', serif; font-size: 1.2rem; }
+        
+        /* Footer */
+        .footer { text-align: center; padding: 30px 0; color: var(--text-muted); font-size: 0.9rem; margin-top: auto; border-top: 1px solid var(--border-color); }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <header>
-        <h1>AI Multi-Lang OCR</h1>
-        <p>Optimasi: Arab (Harakat), Turki, Indonesia & Inggris</p>
-    </header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-wrapper">
+                <div class="brand">
+                    <i class="fas fa-cube fa-lg"></i> OCR Tool Pro
+                </div>
+            </div>
+        </div>
+    </nav>
 
-    <div class="upload-box" onclick="document.getElementById('inp').click()">
-        <p>📷 Klik untuk Upload Gambar / Gunakan Kamera</p>
-        <input type="file" id="inp" hidden accept="image/*">
-        <img id="preview-img">
-    </div>
+    <main class="container">
+        <section class="hero-section">
+            <h1 class="hero-title">Konverter Gambar ke Teks Online</h1>
+            <p class="hero-subtitle">Ekstrak teks dari gambar, foto, atau dokumen pindaian dengan akurasi tinggi menggunakan AI. Gratis dan tanpa batas.</p>
 
-    <div class="status-area" id="stat">Status: Menyiapkan AI...</div>
+            <div class="tool-card">
+                <div class="options-bar">
+                    <label class="lang-label"><i class="fas fa-language"></i> Bahasa Dokumen:</label>
+                    <select id="languageSelect" class="lang-select">
+                        <option value="ara+eng+ind">⚡ Deteksi Otomatis (Campuran)</option>
+                        <option value="ara">🇸🇦 Arab (Kitab/Mushaf - Akurat)</option>
+                        <option value="ind">🇮🇩 Indonesia</option>
+                        <option value="eng">🇺🇸 Inggris</option>
+                        <option value="tur">🇹🇷 Turki</option>
+                    </select>
+                </div>
 
-    <div class="controls">
-        <button class="btn-run" id="runBtn" disabled>Mulai Scan (20 Workers)</button>
-        <button class="btn-copy" id="copyBtn">Salin Teks</button>
-    </div>
+                <div class="upload-section">
+                    <input type="file" id="fileInput" hidden multiple accept="image/jpeg, image/png, image/gif, image/bmp, image/webp">
+                    <div class="dropzone" id="dropzoneArea">
+                        <div class="dropzone-icon"><i class="fas fa-cloud-upload-alt"></i></div>
+                        <h3 class="dropzone-text">Seret & Lepas file di sini</h3>
+                        <p class="dropzone-subtext">atau klik untuk memilih dari perangkat (JPG, PNG, BMP)</p>
+                    </div>
+                </div>
 
-    <textarea id="output" placeholder="Hasil scan akan muncul di sini..."></textarea>
-</div>
+                <div class="preview-area hidden" id="previewContainer"></div>
+                
+                <div class="action-section">
+                    <button id="convertBtn" class="btn-convert" disabled>
+                        <i class="fas fa-magic"></i> Mulai Konversi
+                    </button>
+                    <div id="statusText" class="status-text">Silakan upload gambar terlebih dahulu.</div>
+                </div>
 
-<script>
-    const inp = document.getElementById('inp');
-    const runBtn = document.getElementById('runBtn');
-    const out = document.getElementById('output');
-    const stat = document.getElementById('stat');
-    const preview = document.getElementById('preview-img');
+                <div class="results-section hidden" id="resultsSection">
+                    <div class="results-header">
+                        <div class="results-title"><i class="fas fa-file-alt"></i> Hasil Ekstraksi</div>
+                        <div class="results-actions">
+                            <button onclick="copyToClipboard()" class="toolbar-btn btn-copy" title="Salin Teks">
+                                <i class="far fa-copy"></i> Salin
+                            </button>
+                            <button onclick="downloadTXT()" class="toolbar-btn" title="Download file TXT">
+                                <i class="fas fa-download"></i> .TXT
+                            </button>
+                            <button onclick="downloadDOC()" class="toolbar-btn" title="Download file Microsoft Word">
+                                <i class="fas fa-file-word"></i> .DOC
+                            </button>
+                        </div>
+                    </div>
+                    <textarea id="outputArea" class="output-textarea" placeholder="Teks hasil konversi akan muncul di sini..." readonly></textarea>
+                </div>
+            </div>
+        </section>
+    </main>
 
-    inp.onchange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = () => {
-                preview.src = reader.result;
-                preview.style.display = 'block';
-                runBtn.disabled = false;
-                stat.style.display = 'block';
-                stat.innerText = "Status: Gambar dimuat. Klik Mulai Scan.";
-            };
-            reader.readAsDataURL(file);
-        }
-    };
+    <footer class="footer">
+        <div class="container">
+            <p>© 2026 OCR Tool Pro. Dibangun ulang dengan etika menggunakan teknologi Open Source.</p>
+        </div>
+    </footer>
 
-    runBtn.onclick = async () => {
-        runBtn.disabled = true;
-        out.value = "Sedang melakukan Visual Rescan... Mohon tunggu.";
-        stat.innerText = "Status: Mengunduh data bahasa (Arab & Turki)...";
 
-        try {
-            // Mengaktifkan 20 Workers secara paralel untuk kecepatan tinggi
-            const worker = await Tesseract.createWorker('ara+tur+eng+ind', 1, {
-                logger: m => {
-                    if(m.status === 'recognizing text') {
-                        stat.innerText = `Status: Memproses Visual (${Math.round(m.progress * 100)}%)`;
+    <script>
+        // Referensi Elemen DOM
+        const elements = {
+            fileInput: document.getElementById('fileInput'),
+            dropzone: document.getElementById('dropzoneArea'),
+            previewContainer: document.getElementById('previewContainer'),
+            convertBtn: document.getElementById('convertBtn'),
+            statusText: document.getElementById('statusText'),
+            resultsSection: document.getElementById('resultsSection'),
+            outputArea: document.getElementById('outputArea'),
+            languageSelect: document.getElementById('languageSelect')
+        };
+
+        let selectedFiles = [];
+
+        // --- Event Listeners ---
+
+        // 1. Handle Klik pada Dropzone
+        elements.dropzone.addEventListener('click', () => elements.fileInput.click());
+
+        // 2. Handle File yang Dipilih
+        elements.fileInput.addEventListener('change', handleFileSelection);
+
+        // 3. Handle Tombol Konversi
+        elements.convertBtn.addEventListener('click', startConversionProcess);
+
+        // --- Core Functions ---
+
+        function handleFileSelection(event) {
+            selectedFiles = Array.from(event.target.files);
+            elements.previewContainer.innerHTML = ''; // Reset preview
+
+            if (selectedFiles.length > 0) {
+                elements.previewContainer.classList.remove('hidden');
+                // Buat thumbnail untuk setiap file
+                selectedFiles.forEach(file => {
+                    if (file.type.startsWith('image/')) {
+                        const img = document.createElement('img');
+                        img.src = URL.createObjectURL(file);
+                        img.className = 'preview-thumb';
+                        elements.previewContainer.appendChild(img);
                     }
-                }
-            });
-
-            // Optimasi untuk teks Arab berharakat
-            await worker.setParameters({
-                tessedit_pageseg_mode: '1', // Automatic page segmentation
-                preserve_interword_spaces: '1',
-            });
-
-            const { data: { text } } = await worker.recognize(preview.src);
-            
-            // Cek apakah ada karakter Arab, jika ya aktifkan mode RTL
-            if (/[\u0600-\u06FF]/.test(text)) {
-                out.classList.add('rtl-mode');
+                });
+                
+                elements.convertBtn.disabled = false;
+                updateStatus(`${selectedFiles.length} gambar dipilih. Siap untuk dikonversi.`, false);
             } else {
-                out.classList.remove('rtl-mode');
+                resetUI();
             }
-
-            out.value = text;
-            stat.innerText = "Status: Berhasil diekstrak!";
-            await worker.terminate();
-        } catch (err) {
-            stat.innerText = "Status: Terjadi kesalahan teknis.";
-            console.error(err);
         }
-        runBtn.disabled = false;
-    };
 
-    document.getElementById('copyBtn').onclick = () => {
-        out.select();
-        document.execCommand('copy');
-        alert("Teks berhasil disalin!");
-    };
-</script>
+        async function startConversionProcess() {
+            if (selectedFiles.length === 0) return;
 
-</body>
-</html><div class="wrapper">
-    <header>
-        <h1>AI Multi-Format OCR</h1>
-        <p>Mendukung: 
-            <span class="format-badge">JPG/PNG</span><span class="format-badge">PDF</span>
-            <span class="format-badge">WEBP</span><span class="format-badge">TIFF</span>
-            <span class="format-badge">RAW</span><span class="format-badge">PSD/AI</span>
-        </p>
-    </header>
-
-    <div class="drop-zone" id="dropZone">
-        <p id="dropText">Tarik file ke sini atau klik untuk memilih file</p>
-        <input type="file" id="fileInput" hidden accept=".jpg,.jpeg,.png,.bmp,.gif,.tiff,.webp,.pdf,.ai,.eps,.psd,.xps,.djvu,.cr2,.nef,.arw,.dng,.raf">
-        <canvas id="preview-canvas"></canvas>
-    </div>
-
-    <div class="status-box">
-        <div id="statusText">Status: Siap memproses.</div>
-        <div class="progress-bar" id="progressBar"></div>
-    </div>
-
-    <div class="btn-group">
-        <button class="btn-primary" id="startBtn" disabled>Mulai Ekstraksi</button>
-        <button class="btn-success" id="copyBtn">Salin Hasil</button>
-    </div>
-
-    <div class="output-area">
-        <textarea id="outputField" placeholder="Hasil teks akan muncul di sini..."></textarea>
-    </div>
-</div>
-
-<script>
-    // Konfigurasi PDF.js Worker
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
-
-    const fileInput = document.getElementById('fileInput');
-    const dropZone = document.getElementById('dropZone');
-    const startBtn = document.getElementById('startBtn');
-    const outputField = document.getElementById('outputField');
-    const statusText = document.getElementById('statusText');
-    const progressBar = document.getElementById('progressBar');
-    const canvas = document.getElementById('preview-canvas');
-    const ctx = canvas.getContext('2d');
-
-    let currentFile = null;
-
-    // Handle Klik & Drag-Drop
-    dropZone.onclick = () => fileInput.click();
-    fileInput.onchange = (e) => handleFile(e.target.files[0]);
-
-    async function handleFile(file) {
-        if (!file) return;
-        currentFile = file;
-        startBtn.disabled = false;
-        statusText.innerText = `File terpilih: ${file.name}`;
-        
-        // Reset Preview
-        canvas.style.display = 'none';
-        
-        // Jika Gambar Standar, tampilkan preview
-        if (file.type.startsWith('image/')) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const img = new Image();
-                img.onload = () => {
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                    ctx.drawImage(img, 0, 0);
-                    canvas.style.display = 'block';
-                }
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
-        }
-    }
-
-    startBtn.onclick = async () => {
-        if (!currentFile) return;
-        startBtn.disabled = true;
-        outputField.value = "Sedang memproses... Mohon tunggu.";
-        
-        if (currentFile.type === "application/pdf") {
-            await processPDF(currentFile);
-        } else {
-            await processImage(currentFile);
-        }
-        startBtn.disabled = false;
-    };
-
-    // Fungsi OCR Image (Mendukung Multi-Worker Tesseract)
-    async function processImage(file) {
-        statusText.innerText = "Menginisialisasi AI Workers...";
-        const worker = await Tesseract.createWorker('eng+ind', 1, {
-            logger: m => {
-                if (m.status === 'recognizing text') {
-                    const progress = Math.round(m.progress * 100);
-                    progressBar.style.width = progress + '%';
-                    statusText.innerText = `Mengekstrak Teks: ${progress}%`;
-                }
-            }
-        });
-
-        const result = await worker.recognize(file);
-        outputField.value = result.data.text;
-        statusText.innerText = "Ekstraksi Selesai!";
-        await worker.terminate();
-    }
-
-    // Fungsi OCR PDF (Konversi tiap halaman ke Canvas)
-    async function processPDF(file) {
-        const arrayBuffer = await file.arrayBuffer();
-        const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
-        let fullText = "";
-
-        for (let i = 1; i <= pdf.numPages; i++) {
-            statusText.innerText = `Memproses Halaman PDF ${i} dari ${pdf.numPages}...`;
-            const page = await pdf.getPage(i);
-            const viewport = page.getViewport({ scale: 2 });
-            canvas.width = viewport.width;
-            canvas.height = viewport.height;
-
-            await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+            // Update UI State
+            elements.convertBtn.disabled = true;
+            elements.convertBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses...';
+            elements.resultsSection.classList.remove('hidden');
+            elements.outputArea.value = "Sedang menginisialisasi mesin AI...";
             
-            // OCR per halaman
-            const worker = await Tesseract.createWorker('eng+ind');
+            const selectedLang = elements.languageSelect.value;
+            updateStatus(`Memuat data bahasa (${selectedLang.toUpperCase()}). Mohon tunggu...`, true);
+
+            try {
+                // Inisialisasi Worker Tesseract
+                const worker = await Tesseract.createWorker(selectedLang, 1, {
+                    logger: m => {
+                        // Update status realtime dari Tesseract
+                        if (m.status === 'recognizing text') {
+                            updateStatus(`Sedang Membaca Gambar: ${(m.progress * 100).toFixed(0)}%`, true);
+                        } else if (m.status === 'loading tesseract core' || m.status === 'initializing tesseract') {
+                             updateStatus(`Menyiapkan Mesin AI...`, true);
+                        }
+                    }
+                });
+
+                // Set Parameter untuk Akurasi Maksimal
+                await worker.setParameters({
+                    tessedit_pageseg_mode: '1', // Automatic page segmentation (PSM_AUTO)
+                    preserve_interword_spaces: '1', // Menjaga spasi antar kata
+                });
+
+                let combinedResults = "";
+
+                // Loop melalui semua file yang diupload
+                for (let i = 0; i < selectedFiles.length; i++) {
+                    updateStatus(`Memproses gambar ke-${i + 1} dari ${selectedFiles.length}...`, true);
+                    const { data: { text } } = await worker.recognize(selectedFiles[i]);
+                    // Tambahkan pemisah jika lebih dari 1 file
+                    const separator = selectedFiles.length > 1 ? `\n\n--- Halaman ${i + 1} ---\n` : "";
+                    combinedResults += separator + text;
+                }
+
+                // Deteksi Otomatis untuk Mode RTL (Arab)
+                const arabicRegex = /[\u0600-\u06FF]/;
+                if (selectedLang.includes('ara') || arabicRegex.test(combinedResults)) {
+                    elements.outputArea.classList.add('is-rtl');
+                } else {
+                    elements.outputArea.classList.remove('is-rtl');
+                }
+
+                // Tampilkan Hasil Akhir
+                elements.outputArea.value = combinedResults.trim() || "Tidak ada teks yang terdeteksi.";
+                updateStatus("✅ Konversi selesai! Silakan salin atau download hasilnya.", false);
+                
+                // Bersihkan worker
+                await worker.terminate();
+
+            } catch (error) {
+                console.error("OCR Error:", error);
+                elements.outputArea.value = "Terjadi kesalahan saat memproses gambar.";
+                updateStatus("❌ Gagal. Pastikan koneksi internet stabil dan coba lagi.", false);
+            } finally {
+                // Reset Tombol
+                elements.convertBtn.disabled = false;
+                elements.convertBtn.innerHTML = '<i class="fas fa-magic"></i> Mulai Konversi';
+            }
+        }
+
+        // --- Helper Functions (Utilities) ---
+
+        function updateStatus(message, isLoading) {
+            elements.statusText.innerHTML = isLoading ? `<i class="fas fa-circle-notch fa-spin"></i> ${message}` : message;
+        }
+
+        function resetUI() {
+            elements.previewContainer.classList.add('hidden');
+            elements.convertBtn.disabled = true;
+            updateStatus("Silakan upload gambar terlebih dahulu.", false);
+        }
+
+        // --- Fitur Aksi (Copy & Download) ---
+
+        function copyToClipboard() {
+            if (!elements.outputArea.value) return;
+            elements.outputArea.select();
+            document.execCommand('copy');
+            // Feedback visual sederhana pada tombol
+            const originalBtnText = document.querySelector('.btn-copy').innerHTML;
+            document.querySelector('.btn-copy').innerHTML = '<i class="fas fa-check"></i> Tersalin!';
+            setTimeout(() => {
+                 document.querySelector('.btn-copy').innerHTML = originalBtnText;
+            }, 2000);
+        }
+
+        function downloadTXT() {
+            if (!elements.outputArea.value) { alert("Tidak ada teks untuk diunduh."); return; }
+            const blob = new Blob([elements.outputArea.value], { type: "text/plain;charset=utf-8" });
+            saveAs(blob, "hasil-ocr.txt");
+        }
+
+        function downloadDOC() {
+            if (!elements.outputArea.value) { alert("Tidak ada teks untuk diunduh."); return; }
+            // Wrapper HTML sederhana agar dikenali sebagai dokumen Word
+            const isRTL = elements.outputArea.classList.contains('is-rtl');
+            const content = `
+                <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+                <head><meta charset='utf-8'><title>Dokumen Hasil OCR</title>
+                <style>
+                    body { font-family: 'Arial', sans-serif; line-height: 1.5; direction: ${isRTL ? 'rtl' : 'ltr'}; }
+                    p { margin-bottom: 1em; }
+                </style>
+                </head><body>
+                ${elements.outputArea.value.split('\n').map(line => `<p>${line}</p>`).join('')}
+                </body></html>`;
+            
+            const blob = new Blob(['\ufeff', content], { type: 'application/msword' });
+            saveAs(blob, "hasil-ocr.doc");
+        }
+    </script>
+</body>
+</html> await Tesseract.createWorker('eng+ind');
             const result = await worker.recognize(canvas);
             fullText += `--- Halaman ${i} ---\n${result.data.text}\n\n`;
             await worker.terminate();
@@ -263,3 +353,4 @@
 </body>
 
 </html>
+
